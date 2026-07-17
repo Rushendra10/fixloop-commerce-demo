@@ -27,11 +27,10 @@ export function calculateRefund(order, returnedItems) {
     refundedLines.push({ sku, quantity, merchandiseCents, discountCents, taxCents });
   }
 
-  // Outbound shipping is refundable only when the entire order is returned.
-  // BUG: this checks only SKUs present in the return request, not every order line.
-  const fullOrderReturned = refundedLines.every((returned) => {
-    const ordered = order.lines.find((line) => line.sku === returned.sku);
-    return returned.quantity === ordered.quantity;
+  // Outbound shipping is refundable only when every order line is fully returned.
+  const fullOrderReturned = order.lines.every((ordered) => {
+    const returned = refundedLines.find((line) => line.sku === ordered.sku);
+    return returned != null && returned.quantity === ordered.quantity;
   });
   const shippingCents = fullOrderReturned ? order.shippingCents : 0;
   const merchandiseCents = refundedLines.reduce((sum, line) => sum + line.merchandiseCents, 0);
