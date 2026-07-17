@@ -36,10 +36,11 @@ export function calculateAvailability(stockByWarehouse, reservations, asOf) {
   for (const [warehouse, stock] of Object.entries(stockByWarehouse)) {
     availability[warehouse] = {};
     for (const [sku, onHand] of Object.entries(stock)) {
-      // Reservations are scoped to a warehouse. This currently subtracts
-      // every reservation for the SKU, leaking demand across warehouses.
       const reserved = active
-        .filter((reservation) => reservation.sku === sku)
+        .filter(
+          (reservation) =>
+            reservation.warehouse === warehouse && reservation.sku === sku,
+        )
         .reduce((total, reservation) => total + reservation.quantity, 0);
       availability[warehouse][sku] = Math.max(0, onHand - reserved);
     }
