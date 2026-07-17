@@ -5,3 +5,4 @@ export { quoteShipping } from "./shipping.js";
 export { calculateTax } from "./tax.js";
 export { formatUsd } from "./money.js";
 export { calculateRefund } from "./returns.js";
+export { projectOrder } from "./order-events.js";
