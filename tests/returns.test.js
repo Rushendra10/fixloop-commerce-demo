@@ -29,3 +29,25 @@ test("return quantities cannot exceed the original purchase", () => {
     /more than purchased/,
   );
 });
+
+test("partial return of a split order does not refund outbound shipping", () => {
+  const order = checkout(
+    {
+      lines: [
+        { sku: "LAMP-PRO", quantity: 2 },
+        { sku: "USB-CABLE", quantity: 1 },
+      ],
+      couponCode: "VIP20",
+      destination: { state: "CA", postalCode: "94107" },
+    },
+    { freeShippingThresholdCents: 6_000 },
+  );
+
+  assert.equal(order.shippingCents, 750);
+
+  const refund = calculateRefund(order, [{ sku: "USB-CABLE", quantity: 1 }]);
+  assert.equal(refund.merchandiseCents, 1_600);
+  assert.equal(refund.taxCents, 116);
+  assert.equal(refund.shippingCents, 0);
+  assert.equal(refund.totalCents, 1_716);
+});
