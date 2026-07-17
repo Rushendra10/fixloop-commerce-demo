@@ -7,3 +7,4 @@ export { formatUsd } from "./money.js";
 export { calculateRefund } from "./returns.js";
 export { projectOrder } from "./order-events.js";
 export { estimateDelivery } from "./delivery.js";
+export { calculateAvailability } from "./inventory-reservations.js";
