@@ -4,6 +4,37 @@ function parseInstant(value) {
   return date;
 }
 
+function zonedParts(date, timeZone) {
+  let formatter;
+  try {
+    formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      hourCycle: "h23",
+      weekday: "short",
+    });
+  } catch {
+    throw new RangeError(`Invalid IANA time zone: ${timeZone}`);
+  }
+
+  const parts = Object.fromEntries(
+    formatter
+      .formatToParts(date)
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value]),
+  );
+
+  return {
+    year: Number(parts.year),
+    month: Number(parts.month),
+    day: Number(parts.day),
+    hour: Number(parts.hour),
+  };
+}
+
 function isWeekend(date) {
   const day = date.getUTCDay();
   return day === 0 || day === 6;
@@ -47,10 +78,9 @@ export function estimateDelivery({
     throw new RangeError("transitBusinessDays must be a non-negative integer");
   }
 
-  // warehouseTimeZone is accepted by the API, but cutoff evaluation currently
-  // uses the server's UTC clock instead of the warehouse's local wall clock.
-  const beforeCutoff = ordered.getUTCHours() < cutoffHourLocal;
-  const orderDay = startOfUtcDay(ordered);
+  const local = zonedParts(ordered, warehouseTimeZone);
+  const beforeCutoff = local.hour < cutoffHourLocal;
+  const orderDay = new Date(Date.UTC(local.year, local.month - 1, local.day));
   const processingDay = beforeCutoff && !isWeekend(orderDay)
     ? orderDay
     : nextBusinessDay(orderDay);
