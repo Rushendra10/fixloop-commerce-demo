@@ -18,6 +18,10 @@ function validateEvent(event) {
   }
 }
 
+function payloadsEqual(a, b) {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
 function applyEvent(state, event) {
   switch (event.type) {
     case "order.created":
@@ -61,9 +65,20 @@ export function projectOrder(events) {
     refundedCents: 0,
     shipments: [],
   };
+  const seen = new Map();
 
   for (const event of events) {
     validateEvent(event);
+    const prior = seen.get(event.id);
+    if (prior) {
+      if (prior.type !== event.type || !payloadsEqual(prior.data, event.data)) {
+        throw new Error(
+          `conflict: event id ${event.id} was previously recorded with a different type or payload`,
+        );
+      }
+      continue;
+    }
+    seen.set(event.id, { type: event.type, data: event.data });
     applyEvent(state, event);
   }
   if (!state.created) throw new Error("event stream is missing order.created");
