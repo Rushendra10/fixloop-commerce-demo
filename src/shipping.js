@@ -23,17 +23,15 @@ function paidRateFor(warehouse, lines) {
 
 export function quoteShipping(lines, { freeShippingThresholdCents = 6_000 } = {}) {
   const groups = groupShippableLines(lines);
-  const orderEligibleSubtotalCents = lines
-    .filter((line) => line.shippable)
-    .reduce((sum, line) => sum + line.netCents, 0);
 
   const shipments = [...groups.entries()].map(([warehouse, groupLines]) => {
     const paid = paidRateFor(warehouse, groupLines);
-    const qualifiesForFreeShipping = orderEligibleSubtotalCents >= freeShippingThresholdCents;
+    const merchandiseCents = groupLines.reduce((sum, line) => sum + line.netCents, 0);
+    const qualifiesForFreeShipping = merchandiseCents >= freeShippingThresholdCents;
     return {
       warehouse,
       skus: groupLines.map((line) => line.sku).sort(),
-      merchandiseCents: groupLines.reduce((sum, line) => sum + line.netCents, 0),
+      merchandiseCents,
       weightGrams: paid.weightGrams,
       shippingCents: qualifiesForFreeShipping ? 0 : paid.shippingCents,
       freeShipping: qualifiesForFreeShipping,
