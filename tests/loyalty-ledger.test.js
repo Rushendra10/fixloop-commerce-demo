@@ -27,3 +27,15 @@ test("redemption can span multiple lots", () => {
   const result = redeemPoints(lots, 250, "2026-07-17");
   assert.equal(result.allocations.reduce((sum, item) => sum + item.points, 0), 250);
 });
+
+test("redeems earliest-expiring lots first", () => {
+  const lots = [
+    { id: "later", points: 500, earnedAt: "2026-04-01", expiresAt: "2026-12-01" },
+    { id: "sooner", points: 300, earnedAt: "2026-03-01", expiresAt: "2026-08-01" },
+  ];
+  const result = redeemPoints(lots, 400, "2026-07-17");
+  assert.deepEqual(result.allocations, [
+    { lotId: "sooner", points: 300 },
+    { lotId: "later", points: 100 },
+  ]);
+});
