@@ -21,16 +21,28 @@ export function resolveShippingZone(postalCode, zones) {
   }
   zones.forEach(validateZone);
 
-  // Configuration order currently decides the winner. This is incorrect when
-  // a broad prefix ("9") overlaps a more specific prefix ("941").
-  const zone = zones.find((candidate) =>
-    candidate.prefixes.some((prefix) => normalized.startsWith(prefix.toUpperCase())),
-  );
-  if (!zone) throw new Error(`no shipping zone matches ${normalized}`);
+  let best = null;
+  for (const candidate of zones) {
+    for (const prefix of candidate.prefixes) {
+      const normalizedPrefix = prefix.toUpperCase();
+      if (!normalized.startsWith(normalizedPrefix)) continue;
+
+      const prefixLength = normalizedPrefix.length;
+      if (!best || prefixLength > best.prefixLength) {
+        best = { zone: candidate, prefixLength };
+      } else if (
+        prefixLength === best.prefixLength &&
+        candidate.id !== best.zone.id
+      ) {
+        throw new Error(`ambiguous shipping zone match for ${normalized}`);
+      }
+    }
+  }
+  if (!best) throw new Error(`no shipping zone matches ${normalized}`);
 
   return {
-    zoneId: zone.id,
+    zoneId: best.zone.id,
     postalCode: normalized,
-    baseRateCents: zone.baseRateCents,
+    baseRateCents: best.zone.baseRateCents,
   };
 }
