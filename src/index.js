@@ -8,3 +8,5 @@ export { calculateRefund } from "./returns.js";
 export { projectOrder } from "./order-events.js";
 export { estimateDelivery } from "./delivery.js";
 export { calculateAvailability } from "./inventory-reservations.js";
+export { resolveShippingZone } from "./shipping-zones.js";
+export { redeemPoints } from "./loyalty-ledger.js";
