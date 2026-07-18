@@ -28,12 +28,17 @@ export function redeemPoints(lots, requestedPoints, asOf) {
   const total = available.reduce((sum, lot) => sum + lot.points, 0);
   if (requestedPoints > total) throw new Error(`insufficient points: ${total} available`);
 
-  // This consumes the latest-expiring lots first. Customers can then lose
-  // earlier-expiring points even though enough later points were available.
+  // Consume earliest-expiring lots first so customers do not lose points
+  // unnecessarily. Lots without expiration are treated as last; equal
+  // expirations break by oldest earnedAt, then stable lot id.
   available.sort((left, right) => {
     const leftExpiry = left.expiresAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
     const rightExpiry = right.expiresAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
-    return rightExpiry - leftExpiry || right.earnedAt - left.earnedAt;
+    return (
+      leftExpiry - rightExpiry ||
+      left.earnedAt - right.earnedAt ||
+      String(left.id).localeCompare(String(right.id))
+    );
   });
 
   let remaining = requestedPoints;
