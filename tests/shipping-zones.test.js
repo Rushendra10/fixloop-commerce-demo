@@ -24,3 +24,15 @@ test("normalizes whitespace and case", () => {
 test("rejects postal codes without a matching zone", () => {
   assert.throws(() => resolveShippingZone("50001", ZONES), /no shipping zone/);
 });
+
+test("selects the longest matching prefix regardless of zone order", () => {
+  const zones = [
+    { id: "regional-west", prefixes: ["9"], baseRateCents: 700 },
+    { id: "san-francisco", prefixes: ["941"], baseRateCents: 450 },
+  ];
+  assert.deepEqual(resolveShippingZone("94107", zones), {
+    zoneId: "san-francisco",
+    postalCode: "94107",
+    baseRateCents: 450,
+  });
+});
