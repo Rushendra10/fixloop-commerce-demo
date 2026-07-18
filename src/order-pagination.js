@@ -1,13 +1,21 @@
 function encodeCursor(order) {
-  return Buffer.from(order.createdAt).toString("base64url");
+  return Buffer.from(JSON.stringify({ createdAt: order.createdAt, id: order.id })).toString(
+    "base64url",
+  );
 }
 
 function decodeCursor(cursor) {
   try {
     const value = Buffer.from(cursor, "base64url").toString("utf8");
-    const timestamp = new Date(value);
-    if (Number.isNaN(timestamp.getTime())) throw new Error("invalid timestamp");
-    return timestamp;
+    const parsed = JSON.parse(value);
+    if (
+      typeof parsed?.createdAt !== "string" ||
+      typeof parsed?.id !== "string" ||
+      Number.isNaN(new Date(parsed.createdAt).getTime())
+    ) {
+      throw new Error("invalid cursor payload");
+    }
+    return { createdAt: parsed.createdAt, id: parsed.id };
   } catch (error) {
     throw new TypeError("invalid order cursor", { cause: error });
   }
@@ -30,11 +38,9 @@ export function paginateOrders(orders, { limit = 20, after = null } = {}) {
     return { ...order };
   }).sort(compareOrders);
 
-  // The cursor only contains createdAt. Orders sharing the boundary timestamp
-  // are all filtered out even if they did not fit on the previous page.
   const boundary = after ? decodeCursor(after) : null;
   const eligible = boundary
-    ? sorted.filter((order) => new Date(order.createdAt) < boundary)
+    ? sorted.filter((order) => compareOrders(boundary, order) < 0)
     : sorted;
   const items = eligible.slice(0, limit);
   const hasMore = eligible.length > items.length;
