@@ -24,11 +24,9 @@ export function proratePlanChange({
   }
 
   const remainingDays = (end.getTime() - changed.getTime()) / DAY_MS;
-  // Monthly plans currently assume every billing period is exactly 30 days.
-  // February and 31-day periods therefore over- or under-credit customers.
-  const assumedPeriodDays = 30;
-  const unusedCreditCents = Math.round((oldPlanCents * remainingDays) / assumedPeriodDays);
-  const newPlanChargeCents = Math.round((newPlanCents * remainingDays) / assumedPeriodDays);
+  const periodDays = (end.getTime() - start.getTime()) / DAY_MS;
+  const unusedCreditCents = Math.round((oldPlanCents * remainingDays) / periodDays);
+  const newPlanChargeCents = Math.round((newPlanCents * remainingDays) / periodDays);
 
   return {
     remainingDays,
