@@ -12,3 +12,5 @@ export { resolveShippingZone } from "./shipping-zones.js";
 export { redeemPoints } from "./loyalty-ledger.js";
 export { proratePlanChange } from "./subscription-proration.js";
 export { paginateOrders } from "./order-pagination.js";
+export { pricePromotionStack } from "./promotion-stack.js";
+export { allocateFulfillment } from "./fulfillment-allocation.js";
